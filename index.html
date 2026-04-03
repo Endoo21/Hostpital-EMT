@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="th">
+<head><meta charset="UTF-8"><title>Tracking</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;font-size:13px;background:#f5f7fa;color:#222;padding:16px}
+h1{font-size:15px;font-weight:700;color:#1F3864;margin-bottom:2px}
+.meta{font-size:11px;color:#666;margin-bottom:12px}
+.sum{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.sc{background:#fff;border:1px solid #dde;border-radius:8px;padding:8px 14px;min-width:110px;text-align:center}
+.sl{font-size:11px;color:#888}
+.sv{font-size:20px;font-weight:700}
+.leg{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:8px;font-size:11px;color:#666;align-items:center}
+.dot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:3px}
+.fbar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.fbar button{font-size:11px;padding:3px 10px;border:1px solid #bbb;border-radius:20px;background:#fff;color:#555;cursor:pointer}
+.fbar button.on{background:#ddeeff;color:#0C447C;border-color:#7ab}
+.tw{overflow-x:auto;border:1px solid #dde;border-radius:10px;background:#fff}
+table{width:100%;border-collapse:collapse;min-width:900px}
+th{padding:7px 8px;font-size:11px;font-weight:700;color:#555;border-bottom:1px solid #eee;background:#f8f9fb;text-align:left;white-space:nowrap}
+td{padding:6px 8px;border-bottom:1px solid #f0f0f0;font-size:12px;vertical-align:middle}
+tr.cr td{background:#edf2fb;font-weight:700;font-size:11px;color:#1F3864;padding:5px 8px}
+tr.dr:hover td{background:#f5f9ff}
+tr:last-child td{border-bottom:none}
+.bdg{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;border:none}
+.bn{background:#FFF2CC;color:#7F5000}
+.bp{background:#DDEEFF;color:#0C447C}
+.dok{color:#3B6D11;font-size:12px;font-weight:600}
+.dw{color:#BA7517;font-weight:700;font-size:12px}
+.du{color:#A32D2D;font-weight:700;font-size:12px}
+.dm{color:#aaa;font-size:12px}
+.eb{font-size:10px;padding:2px 5px;border:1px solid #ddd;border-radius:4px;background:#fff;color:#888;cursor:pointer;margin-left:3px}
+.eb:hover{background:#f0f0f0}
+.nm{font-size:12px}
+.sp{font-size:11px;color:#888}
+.rm{font-size:11px;color:#BA7517}
+</style>
+</head>
+<body>
+<h1>Tracking รพ.สนาม ราชวิถี</h1>
+<div class="meta">วันหมดสัญญา: 13/08/2569 | ต้องการให้ Sub ส่งของภายใน: 14/07/2569 (หมดสัญญา – 30 วัน)</div>
+<div class="sum" id="sum"></div>
+<div class="leg">
+  <span><span class="dot" style="background:#F4B942"></span>ยังไม่เปิด PO</span>
+  <span><span class="dot" style="background:#378ADD"></span>เปิด PO แล้ว</span>
+  <span style="margin-left:6px">วันโอนมัดจำ:</span>
+  <span style="color:#3B6D11">● ปกติ</span>
+  <span style="color:#BA7517">● &lt;30 วัน</span>
+  <span style="color:#A32D2D">● เลยกำหนด</span>
+</div>
+<div class="fbar">
+  <button onclick="sf('all')" id="f-all" class="on">ทั้งหมด</button>
+  <button onclick="sf('1')" id="f-1">หมวด 1</button>
+  <button onclick="sf('2')" id="f-2">หมวด 2</button>
+  <button onclick="sf('3')" id="f-3">หมวด 3</button>
+  <button onclick="sf('4')" id="f-4">หมวด 4</button>
+  <button onclick="sf('nopo')" id="f-nopo">ยังไม่เปิด PO</button>
+  <button onclick="sf('po')" id="f-po">เปิด PO แล้ว</button>
+</div>
+<div class="tw"><table>
+<colgroup><col style="width:30px"><col style="width:36px"><col style="width:195px"><col style="width:55px"><col style="width:95px"><col style="width:95px"><col style="width:108px"><col style="width:95px"><col style="width:145px"><col style="width:145px"><col style="width:90px"></colgroup>
+<thead><tr>
+<th>#</th><th>TOR</th><th>รายการ / Supplier</th><th>ส่ง(วัน)</th><th>วันโอนมัดจำ</th><th>ต้องการให้ส่ง</th><th style="text-align:center">สถานะ PO</th><th>วันเปิด PO</th><th>เงื่อนไขมัดจำ</th><th>เงื่อนไขงวดสุดท้าย</th><th>หมายเหตุ</th>
+</tr></thead>
+<tbody id="tb"></tbody>
+</table></div>
+
+<script>
+const LD=new Date(2026,6,14);
+const TD=new Date();TD.setHours(0,0,0,0);
+const CATS={'1':'หมวด 1 : อุปกรณ์การแพทย์','2':'หมวด 2 : สิ่งอำนวยความสะดวก / ไฟฟ้า / น้ำ','3':'หมวด 3 : อุปกรณ์สนับสนุนทั่วไป','4':'หมวด 4 : อุปกรณ์สื่อสาร (บ.คม)'};
+let D=[
+{c:'1',t:'1',n:'เครื่องเอ็กซเรย์ชนิดเคลื่อนย้ายได้ X-ray portable',s:'บจ.คงศักดิ์เอ็กซเรย์ฯ',d:60,dp:'50% วันส่ง PO',bl:'50% วันส่งของ',r:'มี PO ฉบับยกเลิก + ฉบับใหม่',st:'po'},
+{c:'1',t:'2',n:'เครื่องให้ความอบอุ่นทารกแรกเกิด (Radiant warmer)',s:'บจ.เคดีทีดี อัลทิเมท',d:90,dp:'30% วันส่ง PO',bl:'70% เครดิต 30 วันหลังส่ง',r:'',st:'po'},
+{c:'1',t:'3',n:'เครื่องละลายพลาสม่าแบบแห้ง (Dry Plasma thawer)',s:'บจ.เมดิคูล',d:90,dp:'-',bl:'100% ก่อนส่ง 7 วัน',r:'',st:'po'},
+{c:'1',t:'6',n:'เปลยกเคลื่อนย้ายผู้ป่วยแบบตะกร้า (Basket)',s:'บจ.อินเตอร์ เมดิคอล',d:180,dp:'-',bl:'100% เครดิต 30 วันหลังส่ง',r:'',st:'nopo'},
+{c:'1',t:'7',n:'ชุดกระดานเคลื่อนย้ายผู้บาดเจ็บ',s:'บจ.โปรเมดิก',d:null,dp:'-',bl:'-',r:'',st:'nopo'},
+{c:'1',t:'17',n:'เครื่องดมยาสลบชนิด 3 ก๊าซ พร้อมเครื่องช่วยหายใจ',s:'บจ.เคดีทีดี อัลทิเมท',d:90,dp:'30% วันส่ง PO',bl:'70% เครดิต 30 วันหลังส่ง',r:'',st:'po'},
+{c:'1',t:'18',n:'เครื่องช่วยกระบวนการปั๊มและฟื้นคืนชีพผู้ป่วย',s:'บจ.โปรเมดิก',d:null,dp:'-',bl:'-',r:'',st:'nopo'},
+{c:'1',t:'19',n:'เครื่องช่วยหายใจชนิดเคลื่อนที่ได้',s:'บจ.ซิมเพล็กซ์ฯ',d:120,dp:'30% วันส่ง PO',bl:'70% เครดิต 30 วันหลังส่ง',r:'',st:'nopo'},
+{c:'1',t:'20',n:'เครื่องติดตามการทำงานของหัวใจและสัญญาณชีพ',s:'บจ.เคดีทีดี อัลทิเมท',d:90,dp:'30% วันส่ง PO',bl:'70% เครดิต 30 วันหลังส่ง',r:'',st:'nopo'},
+{c:'1',t:'21',n:'ตู้อบเด็กแบบเคลื่อนย้าย',s:'บจ.เคดีทีดี อัลทิเมท',d:90,dp:'30% วันส่ง PO',bl:'70% เครดิต 30 วันหลังส่ง',r:'',st:'po'},
+{c:'1',t:'22',n:'เครื่องตรวจอวัยวะภายใน Ultrasound',s:'EDAN THAILAND',d:7,dp:'-',bl:'100% ก่อนส่ง 7 วัน',r:'เอาไปเก็บที่ไหน?',st:'po'},
+{c:'1',t:'23',n:'เครื่องติดตามคลื่นไฟฟ้าหัวใจและสัญญาณชีพ',s:'บจ.เคดีทีดี อัลทิเมท',d:90,dp:'30% วันส่ง PO',bl:'70% เครดิต 30 วันหลังส่ง',r:'',st:'nopo'},
+{c:'1',t:'24',n:'เครื่องรัดห้ามเลือดแบบจ่ายลมคู่',s:'บจ.กรุงไทย เมดิคอล',d:90,dp:'-',bl:'100% ชำระก่อนส่ง',r:'',st:'po'},
+{c:'1',t:'26',n:'ตู้เย็นเก็บเลือด ขนาด 2 ประตู',s:'บจ.เมดิคูล',d:90,dp:'-',bl:'100% ก่อนส่ง 7 วัน',r:'',st:'po'},
+{c:'1',t:'27',n:'เครื่องช่วยใส่ท่อช่วยหายใจ VDO Laryngoscope',s:'บจ.เอิร์ธไลน์',d:7,dp:'-',bl:'100% เครดิต 30 วันหลังส่ง',r:'เอาไปเก็บที่ไหน?',st:'nopo'},
+{c:'1',t:'29',n:'โคมไฟหัตถการชนิดเคลื่อนย้าย พร้อมแบตเตอรี่สำรอง',s:'บจ.ปัญญ์สุข เมดิคัล',d:120,dp:'30% วันส่ง PO',bl:'70% เครดิต 30 วันหลังส่ง',r:'',st:'nopo'},
+{c:'1',t:'37',n:'เครื่องติดตามหัวใจและสัญญาณชีพ (เด็ก)',s:'บจ.เคดีทีดี อัลทิเมท',d:90,dp:'30% วันส่ง PO',bl:'70% เครดิต 30 วันหลังส่ง',r:'',st:'nopo'},
+{c:'1',t:'40',n:'ตู้เย็นควบคุมอุณหภูมิ 2-8°C ขนาด 2 ประตู',s:'บจ.เมดิคูล',d:90,dp:'-',bl:'100% ก่อนส่ง 7 วัน',r:'',st:'po'},
+{c:'1',t:'41',n:'ชุดสว่านเจาะคว้านกระดูก Cordless Driver',s:'Stryker / บจ.ซิลลิค ฟาร์มา',d:150,dp:'50% วันส่ง PO',bl:'50% ก่อนส่ง 3 วัน',r:'',st:'nopo'},
+{c:'1',t:'42',n:'ชุดเครื่องมือพื้นฐาน major (Lap Set)',s:'บจ.ออโรร่า แอดวานซ์',d:120,dp:'-',bl:'-',r:'',st:'po'},
+{c:'1',t:'43',n:'ชุดเครื่องมือผ่าตัด Ceasarian Set',s:'บจ.ออโรร่า แอดวานซ์',d:120,dp:'-',bl:'-',r:'',st:'po'},
+{c:'1',t:'44',n:'ชุดเครื่องมือผ่าตัด Minor Set',s:'บจ.ออโรร่า แอดวานซ์',d:120,dp:'-',bl:'-',r:'',st:'po'},
+{c:'1',t:'45',n:'ชุดเครื่องมือผ่าตัด Plastic Set',s:'บจ.ออโรร่า แอดวานซ์',d:120,dp:'-',bl:'-',r:'',st:'po'},
+{c:'1',t:'47',n:'ชุดโลหะดามกระดูกภายนอกขนาดเล็ก',s:'บจ.เอ็มดีซี (ประเทศไทย)',d:150,dp:'-',bl:'-',r:'',st:'po'},
+{c:'1',t:'48',n:'ชุดโลหะดามกระดูกภายนอกขนาดใหญ่',s:'บจ.เอ็มดีซี (ประเทศไทย)',d:150,dp:'-',bl:'-',r:'',st:'po'},
+{c:'2',t:'1',n:'กระโจมพยาบาลสนามชนิดโครงท่ออากาศ 56 ตร.ม. (15 หลัง)',s:'LANCO',d:null,dp:'-',bl:'-',r:'',st:'nopo'},
+{c:'2',t:'2',n:'กระโจมพยาบาลสนามชนิดโครงท่ออากาศ 42 ตร.ม. (5 หลัง)',s:'LANCO',d:null,dp:'-',bl:'-',r:'',st:'nopo'},
+{c:'2',t:'5',n:'รถ ATV พร้อม Trailer เคลื่อนย้ายผู้ประสบภัย',s:'บจ.แอดวานซ์เรสคิว โซลูชั่น',d:null,dp:'-',bl:'-',r:'',st:'po'},
+{c:'2',t:'6',n:'ระบบกำจัดขยะและสิ่งปฏิกูล',s:'ELASTEC',d:null,dp:'-',bl:'-',r:'',st:'nopo'},
+{c:'2',t:'7',n:'รถเข็นฉุกเฉิน Emergency cart (5 คัน)',s:'บจ.โอลีฟอุปกรณ์ทางแพทย์',d:null,dp:'-',bl:'-',r:'',st:'po'},
+{c:'2',t:'9',n:'ชั้นวางของ Heavy rack (8 ชุด)',s:'บจ.เฮฟวี่แร็คอิมพอร์ต',d:null,dp:'-',bl:'-',r:'',st:'po'},
+{c:'2',t:'10',n:'โต๊ะพับเอนกประสงค์ (31 ตัว)',s:'บจ.โอเอเฟอร์นิเจอร์',d:null,dp:'-',bl:'-',r:'',st:'po'},
+{c:'2',t:'11',n:'เก้าอี้พับ (120 ตัว)',s:'บจ.เวิร์ค สเตชั่น ออฟฟิศ (ไทยแลนด์)',d:null,dp:'-',bl:'-',r:'',st:'nopo'},
+{c:'2',t:'15',n:'เครื่องปรับอากาศเคลื่อนที่ ≥18,000 BTU (68 เครื่อง)',s:'บจ.วิมาน อากาศ',d:null,dp:'-',bl:'-',r:'',st:'po'},
+{c:'2',t:'16',n:'เครื่องกำเนิดไฟฟ้า 3 เฟส ≥10 kVA พร้อมตู้ MDB (4 เครื่อง)',s:'บจ.เอส.อี.เอ พาวเวอร์ เจ็นท์',d:null,dp:'-',bl:'-',r:'SEA 14',st:'po'},
+{c:'2',t:'17',n:'เครื่องกำเนิดไฟฟ้า 1 เฟส ≥10 kVA พร้อมตู้ MDB (36 เครื่อง)',s:'บจ.เอส.อี.เอ พาวเวอร์ เจ็นท์',d:null,dp:'-',bl:'-',r:'SEA 14S',st:'po'},
+{c:'2',t:'18',n:'เครื่องปรับอากาศเคลื่อนที่ห้องผ่าตัด ≥36,000 BTU (4 เครื่อง)',s:'บจ.สยามเทมป์',d:null,dp:'-',bl:'-',r:'',st:'po'},
+{c:'2',t:'26',n:'ห้องน้ำ-ห้องสุขาเคลื่อนที่ (30 หลัง)',s:'บจ.ที.เจ. เวิล์ดไวด์',d:null,dp:'-',bl:'-',r:'',st:'nopo'},
+{c:'3',t:'26',n:'เสื้อชูชีพปฎิบัติงานในกระแสน้ำเชี่ยว Personal Floatation Device (20 ตัว)',s:'บจ.แอดวานซ์เรสคิว โซลูชั่น',d:null,dp:'-',bl:'-',r:'',st:'nopo'},
+{c:'4',t:'1-18',n:'อุปกรณ์สื่อสารและอิเลคทรอนิกส์ทั้งหมด (18 รายการ)',s:'KOM Company / รอข้อมูล',d:null,dp:'-',bl:'-',r:'ไฟล์ คมน์.pdf',st:'po'},
+];
+function fmtD(d){if(!d)return'-';return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+(d.getFullYear()+543)}
+function depDate(days){if(!days)return null;let d=new Date(LD);d.setDate(d.getDate()-days);return d}
+function dl(d){if(!d)return null;return Math.round((d-TD)/86400000)}
+let fc='all';
+function sf(f){fc=f;document.querySelectorAll('.fbar button').forEach(b=>b.classList.remove('on'));document.getElementById('f-'+f).classList.add('on');render()}
+function tog(i){D[i].st=D[i].st==='po'?'nopo':'po';if(D[i].st==='po'&&!D[i].pd)D[i].pd=fmtD(new Date());render()}
+function editPD(i){let v=prompt('วันเปิด PO (dd/mm/yyyy พ.ศ.):', D[i].pd||'');if(v!==null){D[i].pd=v.trim();render()}}
+function editR(i){let v=prompt('หมายเหตุ:', D[i].r||'');if(v!==null){D[i].r=v.trim();render()}}
+function render(){
+  const tb=document.getElementById('tb');tb.innerHTML='';
+  let vis=D.map((x,i)=>({...x,_i:i}));
+  if(fc==='nopo')vis=vis.filter(x=>(x.st||'nopo')==='nopo');
+  else if(fc==='po')vis=vis.filter(x=>x.st==='po');
+  else if(fc!=='all')vis=vis.filter(x=>x.c===fc);
+  let lc='',rn=0;
+  vis.forEach(it=>{
+    if(it.c!==lc){lc=it.c;rn=0;const tr=document.createElement('tr');tr.className='cr';tr.innerHTML='<td colspan="11">'+CATS[it.c]+'</td>';tb.appendChild(tr)}
+    rn++;
+    const dd=depDate(it.d),daysL=dl(dd);
+    let ds='-',dc='dm';
+    if(dd){ds=fmtD(dd);dc=daysL<0?'du':daysL<=30?'dw':'dok'}
+    const st=it.st||'nopo';
+    const tr=document.createElement('tr');tr.className='dr';
+    tr.innerHTML=`<td style="color:#aaa;font-size:11px;text-align:center">${rn}</td>
+<td style="color:#aaa;font-size:11px;text-align:center">${it.t}</td>
+<td><div class="nm">${it.n}</div><div class="sp">${it.s}</div></td>
+<td style="text-align:center;color:#888">${it.d||'<span class="dm">-</span>'}</td>
+<td class="${dc}">${ds}</td>
+<td style="color:#888;font-size:12px">14/07/2569</td>
+<td style="text-align:center"><span class="bdg ${st==='nopo'?'bn':'bp'}" onclick="tog(${it._i})">${st==='nopo'?'ยังไม่เปิด PO':'เปิด PO แล้ว'}</span></td>
+<td style="font-size:11px">${it.pd||'<span class="dm">-</span>'}<button class="eb" onclick="editPD(${it._i})">แก้ไข</button></td>
+<td style="font-size:11px">${it.dp}</td>
+<td style="font-size:11px">${it.bl}</td>
+<td>${it.r?'<span class="rm">'+it.r+'</span>':''}<button class="eb" onclick="editR(${it._i})">${it.r?'แก้':'+ เพิ่ม'}</button></td>`;
+    tb.appendChild(tr);
+  });
+  const tot=D.length,po=D.filter(x=>x.st==='po').length,nopo=tot-po;
+  const urg=D.filter(x=>{const dd=depDate(x.d),daysL=dl(dd);return daysL!==null&&daysL<=30&&(x.st||'nopo')==='nopo'}).length;
+  document.getElementById('sum').innerHTML=`
+<div class="sc"><div class="sl">รายการทั้งหมด</div><div class="sv" style="color:#222">${tot}</div></div>
+<div class="sc"><div class="sl">เปิด PO แล้ว</div><div class="sv" style="color:#185FA5">${po}</div></div>
+<div class="sc"><div class="sl">ยังไม่เปิด PO</div><div class="sv" style="color:#BA7517">${nopo}</div></div>
+<div class="sc"><div class="sl">ต้องโอนมัดจำ ≤30 วัน</div><div class="sv" style="color:#A32D2D">${urg}</div></div>`;
+}
+render();
+</script>
+</body></html>
